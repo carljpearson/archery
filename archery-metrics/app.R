@@ -21,14 +21,31 @@ ui <- fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("round_plot"),
-      dataTableOutput("data_round")
+      plotOutput("plot"),
+      br(),
+      checkboxInput(inputId = "dataviewswitch",
+                    "View data",
+                    value=F),
+      conditionalPanel(
+        condition = "output.dataview",
+        dataTableOutput("data")
+      )
+      
+      
+      
     )
   )
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  #dataview
+  output$dataview <- reactive({
+    input$dataviewswitch == TRUE
+  })
+  outputOptions(output, "dataview", suspendWhenHidden = FALSE)
+  
   
   data <- isolate({
     
@@ -79,29 +96,32 @@ server <- function(input, output) {
     data_round
   })
   
-  round_plot_object <- reactive({
+  end_plot_object <- reactive({
     
-    df_sum <- df_sum
     
-    df_sum %>%
-      ggplot(aes(x=round,
-                 y=score,
-                 fill=end)) +
-      geom_bar(stat="identity",
-               position="dodge") +
-      geom_errorbar(aes(ymin=ifelse(sd>0,0,score-sd),
-                        ymax=ifelse(sd>5,5,score+sd)),
-                    color="black",
-                    position="dodge",
-                    alpha=.3) +
-      theme_tufte(base_family="sans") +
+    data=df
+    df %>%
+      mutate(round=as.factor(Round)) %>%
+      mutate(End=as.factor(End_unordered)) %>%
+      ggplot(aes(x=round,y=real_score)) +
+      geom_boxplot(aes(fill=End)) +
+      geom_point(aes(fill=End),
+                 position=position_jitterdodge(jitter.width = .3,seed=5))+
+      theme_tufte(base_family="sans"
+                  ) +
       coord_cartesian(ylim=c(0,5)) +
       scale_fill_brewer(palette="BrBG") +
-      labs(title="Score per end over rounds")
+      labs(title="Accuracy per arrow over ends and rounds",
+           x="Rounds",
+           y="Score")
     
   })
   
-  output$round_plot <- renderPlot({round_plot_object()})
+  output$plot <- renderPlot({
+    end_plot_object()
+    
+    
+    })
   
   
   
