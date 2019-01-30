@@ -94,10 +94,9 @@ df %>%
 
   
   df_sum %>%
-   # mutate(round=as.factor(round)) %>%
     ggplot(aes(x=as.factor(round),y=score)) +
     stat_summary(geom="line", fun.y="mean",group=1) +
-    geom_point(position=position_jitter(width = .2)) +
+    geom_point(position=position_jitter(height=0,width = .2)) +
     stat_summary(geom="line", fun.y="mean",group=1) +
     theme_tufte(base_family="sans") +
     coord_cartesian(ylim=c(0,5)) +

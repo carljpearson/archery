@@ -16,7 +16,12 @@ ui <- fluidPage(
     sidebarPanel(
       
       
-      p("This app gives a live update on my archery accuracy progress.")
+      p("This app gives a live update on my archery accuracy progress. My targets have possible arrow scores of 0-5. Each arrow score is part of an end (usually 3-6 arrows). Each end is part of a round. "),
+      selectInput("select", h3("Select plot"), 
+                  choices = list("Ends" = 1, 
+                                 "Rounds" = 2,
+                                 "Rounds (Official)" = 3), 
+                  selected = 1)
     ),
     
     # Show a plot of the generated distribution
@@ -93,7 +98,7 @@ server <- function(input, output) {
   })
   
   output$data_round <- renderDataTable({
-    data_round
+    data
   })
   
   end_plot_object <- reactive({
@@ -109,6 +114,7 @@ server <- function(input, output) {
                  position=position_jitterdodge(jitter.width = .3,seed=5))+
       theme_tufte(base_family="sans"
                   ) +
+      theme(text = element_text(size=20)) +
       coord_cartesian(ylim=c(0,5)) +
       scale_fill_brewer(palette="BrBG") +
       labs(title="Accuracy per arrow over ends and rounds",
@@ -117,9 +123,59 @@ server <- function(input, output) {
     
   })
   
-  output$plot <- renderPlot({
-    end_plot_object()
+  round_plot_object <- reactive({
     
+  
+  df_sum %>%
+  ggplot(aes(x=as.factor(round),y=score)) +
+    stat_summary(geom="line", fun.y="mean",group=1) +
+    geom_point(position=position_jitter(height=0,width = .2)) +
+    stat_summary(geom="line", fun.y="mean",group=1) +
+    theme_tufte(base_family="sans") +
+    coord_cartesian(ylim=c(0,5)) +
+    scale_fill_brewer(palette="BrBG") +
+    theme(text = element_text(size=20)) +
+    labs(title="Average round accuracy",
+         subtitle = "Dots are end accuracy",
+         x="Rounds",
+         y="Score")
+    
+  })
+  
+  official_plot_object <- reactive({
+    
+    df<-data
+    df %>%
+      group_by(round=as.factor(Round),end=as.factor(End_unordered)) %>%
+      summarise(score=sum(official_score),n=n()) %>%
+      mutate(perfect=n*10) %>%
+      mutate(percentage_score = score/perfect)%>%
+      ggplot(aes(x=round,y=percentage_score)) +
+      stat_summary(geom="line", fun.y="mean",group=1) +
+      geom_point(position=position_jitter(height=0,width = .2)) +
+      stat_summary(geom="line", fun.y="mean",group=1) +
+      coord_cartesian(ylim = c(0,1)) +
+      theme_tufte(base_family="sans") +
+      theme(text = element_text(size=20)) +
+      labs(title="Offical score sum percentage compared to possible perfect score",
+           subtitle = "Dots are end score",
+           x="Rounds",
+           y="Score") 
+    
+  })
+  
+  output$plot <- renderPlot({
+    
+    if(input$select==1){
+      
+      end_plot_object()
+      
+    } else if(input$select==2) {
+      
+      round_plot_object()
+    } else {
+      official_plot_object()
+    }
     
     })
   
