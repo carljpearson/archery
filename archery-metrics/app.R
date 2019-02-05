@@ -131,11 +131,11 @@ server <- function(input, output) {
       mutate(distance=as.factor(distance)) %>%
       ggplot(aes(x=round,y=score)) +
       stat_summary(geom="line", fun.y="mean",group=1) +
-      geom_point(aes(color=distance),position=position_jitter(height=0,width = .2)) +
+      geom_point(aes(color=distance),position=position_jitter(height=0,width = .2),size=2) +
       stat_summary(geom="line", fun.y="mean",group=1) +
       theme_tufte(base_family="sans") +
       coord_cartesian(ylim=c(0,5)) +
-      scale_fill_brewer(palette="BrBG") +
+      scale_color_brewer(palette="Set1") +
       labs(title="Average round accuracy",
            subtitle = "Dots are end accuracy",
            x="Rounds",
@@ -153,10 +153,10 @@ server <- function(input, output) {
       mutate(percentage_score = score/perfect)%>%
       ggplot(aes(x=round,y=percentage_score)) +
       stat_summary(geom="line", fun.y="mean",group=1) +
-      geom_point(aes(color=Distance),position=position_jitter(height=0,width = .2)) +
+      geom_point(aes(color=Distance),position=position_jitter(height=0,width = .2),size=2) +
       stat_summary(geom="line", fun.y="mean",group=1) +
       coord_cartesian(ylim = c(0,1)) +
-      scale_fill_brewer(palette="BrBG") +
+      scale_color_brewer(palette="Set1") +
       theme_tufte(base_family="sans") +
       labs(title="Offical score sum percentage compared to possible perfect score",
            subtitle = "Dots are end score",
