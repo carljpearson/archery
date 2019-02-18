@@ -139,6 +139,41 @@ df %>%
          x="Rounds",
          y="Score") 
   
-    
+  key <- extract_key_from_url("https://docs.google.com/spreadsheets/d/17qRcQmidYnkvlPqK7uTLuLpyzVyU0D7498WZnRXsPUI/edit?usp=sharing")
+  
+  key %>%
+    gs_key() %>%
+    gs_read('tracking_60cm') -> df60
+data60 <- df60
+  data60 %>%
+  group_by(round=as.numeric(Round),end=as.factor(End_unordered)) %>%
+    summarise(score=mean(real_score),
+              sd=sd(real_score,na.rm=TRUE),
+              range_max=max(real_score,na.rm=TRUE),
+              range_min=min(real_score,na.rm=TRUE),
+              distance=mean(distance_yards)
+    ) -> df_sum60
+  
+  key %>%
+    gs_key() %>%
+    gs_read('grouping') -> df_group
+  
+  df_group %>% 
+    na.omit(date )%>%
+    select(round=Round,end=End,Distance,Distance_actual) %>%
+    inner_join(.,df_sum60) -> df_group
 
-
+  df_group %>%
+    ggplot(aes(x=Distance_actual,score)) +
+    geom_point() +
+    geom_smooth(method='lm',formula=y~x) +
+    labs(
+      title="Score plotted against grouping",
+      x="Outer point distances in CM",
+      y="Point score"
+      
+    ) +
+    theme_tufte(base_family="sans") 
+  
+  
+  

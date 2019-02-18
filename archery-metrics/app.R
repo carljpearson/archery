@@ -20,22 +20,13 @@ ui <- fluidPage(
       selectInput("select", h3("Select plot"), 
                   choices = list("Ends" = 1, 
                                  "Rounds" = 2,
-                                 "Rounds (Official)" = 3), 
+                                 "Rounds (Official)" = 3,
+                                 "Accuracy over grouping"=4), 
                   selected = 1)
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("plot"),
-      br(),
-      checkboxInput(inputId = "dataviewswitch",
-                    "View data",
-                    value=F),
-      conditionalPanel(
-        condition = "output.dataview",
-        dataTableOutput("data")
-      ),
-      hr(),
       plotOutput("plot60"),
       br(),
       checkboxInput(inputId = "dataviewswitch60",
@@ -44,6 +35,17 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "output.dataview60",
         dataTableOutput("data60")
+      ),
+      hr(),
+      
+      br(),
+      checkboxInput(inputId = "dataviewswitch",
+                    "View old plot and data",
+                    value=F),
+      conditionalPanel(
+        condition = "output.dataview",
+        plotOutput("plot"),
+        dataTableOutput("data")
       )
       
       
@@ -193,8 +195,10 @@ server <- function(input, output) {
     } else if(input$select==2) {
       
       round_plot_object()
-    } else {
+    } else if(input$select==3){
       official_plot_object()
+    } else{
+      NULL
     }
     
     })
@@ -221,7 +225,19 @@ server <- function(input, output) {
                 distance=mean(distance_yards)
       ) -> df_sum60
     
+    key %>%
+      gs_key() %>%
+      gs_read('grouping') -> df_group
+    
+    df_group %>% 
+      na.omit(date )%>%
+      select(round=Round,end=End,Distance,Distance_actual) %>%
+      inner_join(.,df_sum60) -> df_sum60
+    
   })
+  
+  
+
   
   output$data60 <- renderDataTable({
     data_sum60
@@ -293,6 +309,24 @@ server <- function(input, output) {
   })
   
   
+  grouping_plot <- reactive({
+    
+    df <- data_sum60
+    
+    df %>%
+      ggplot(aes(x=Distance_actual,score)) +
+      geom_point() +
+      geom_smooth(method='lm',formula=y~x) +
+      labs(
+        title="Score plotted against grouping",
+        x="Perimeter sum, cm",
+        y="Point score"
+        
+      ) +
+      theme_tufte(base_family="sans") 
+    
+  })
+  
   
   
   
@@ -305,8 +339,11 @@ server <- function(input, output) {
     } else if(input$select==2) {
       
       round_plot_object60()
-    } else {
+    } else if(input$select==3) {
       official_plot_object60()
+    } else {
+      grouping_plot()
+      
     }
     
   })
