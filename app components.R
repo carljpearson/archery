@@ -144,7 +144,9 @@ df %>%
   key %>%
     gs_key() %>%
     gs_read('tracking_60cm') -> df60
+  
 data60 <- df60
+
   data60 %>%
   group_by(round=as.numeric(Round),end=as.factor(End_unordered)) %>%
     summarise(score=mean(real_score),
@@ -174,6 +176,48 @@ data60 <- df60
       
     ) +
     theme_tufte(base_family="sans") 
+  
+  
+  data60 %>%
+    mutate(Round=factor(Round,levels=c(min(Round):max(Round)))) %>%
+    mutate(End=as.factor(End_unordered)) %>%
+    #filter(End %in% 3:4) %>%
+    mutate(full_lab=paste0(round,", ",distance_yards," yd")) %>%
+    ggplot(aes(x=full_lab,y=real_score)) +
+    stat_summary(aes(fill=End),fun.y = "mean", geom = "bar",position="dodge")+
+    geom_point(aes(fill=End),
+               position=position_jitterdodge(jitter.width = .1,seed=5))+
+    theme_tufte(base_family="sans"
+    ) +
+    #theme(text = element_text(size=20)) +
+    coord_cartesian(ylim=c(0,5)) +
+   # scale_fill_brewer(palette="BrBG") +
+    labs(title="Accuracy per arrow over ends and rounds",
+         subtitle = "60cm target",
+         x="Rounds",
+         y="Score") 
+  
+  
+ 
+  data60 %>%
+    mutate(Round=factor(Round,levels=c(min(Round):max(Round)))) %>%
+    group_by(round=Round,end=as.factor(End_unordered)) %>%
+    filter(end %in% 1:4) %>%
+    summarise(score=sum(official_score),n=n(),Distance=as.factor(mean(distance_yards))) %>%
+    mutate(perfect=n*10) %>%
+    mutate(percentage_score = score/perfect)%>%
+    ggplot(aes(x=round,y=percentage_score)) +
+    stat_summary(geom="line", fun.y="mean",group=1) +
+    geom_point(aes(color=Distance),position=position_jitter(height=0,width = .2),size=2) +
+    stat_summary(geom="line", fun.y="mean",group=1) +
+    coord_cartesian(ylim = c(0,1)) +
+    scale_color_brewer(palette="Set1") +
+    theme_tufte(base_family="sans") +
+    labs(title="Offical score sum percentage compared to possible perfect score",
+         subtitle = "60cm target, dots are end score",
+         x="Rounds",
+         y="Score") 
+  
   
   
   
