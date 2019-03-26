@@ -185,7 +185,7 @@ server <- function(input, output) {
       mutate(Score=score) %>%
       ggplot(aes(x=round,color=Perimeter,size=Perimeter,y=Score)) +
       geom_point(position="jitter") +
-      ggthemes::theme_tufte() +
+      ggthemes::theme_tufte(base_family="sans") +
       labs(title = "Accuracy and grouping over rounds")
     
     
