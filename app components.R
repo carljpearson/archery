@@ -173,10 +173,15 @@ data60 <- df60
       title="Score plotted against grouping",
       x="Outer point distances in CM",
       y="Point score"
-      
     ) +
     theme_tufte(base_family="sans") 
   
+  df_group %>%
+    mutate(Distance_actual=as.numeric(Distance_actual)) %>%
+    ggplot(aes(x=round,color=Distance_actual,size=Distance_actual,y=score)) +
+    geom_point(position="jitter") +
+    ggthemes::theme_tufte() +
+    labs(title = "Accuracy and grouping over rounds")
   
   data60 %>%
     mutate(Round=factor(Round,levels=c(min(Round):max(Round)))) %>%
@@ -220,4 +225,11 @@ data60 <- df60
   
   
   
-  
+  lmerTest::lmer(real_score ~ End_unordered + Round + (1|End_unordered), data = data60)
+summary(lm(real_score ~ End_unordered + Round, data = data60))
+
+
+
+psych::corr.test(df_group$Distance_actual,df_group$score)
+
+

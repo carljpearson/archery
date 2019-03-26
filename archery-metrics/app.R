@@ -170,7 +170,7 @@ server <- function(input, output) {
   
   accuracy_plot <- reactive({
     
-    df<-data
+    data_sum -> df_sum
     key %>%
       gs_key() %>%
       gs_read('grouping') -> df_group
@@ -178,19 +178,15 @@ server <- function(input, output) {
     df_group %>% 
       na.omit(date )%>%
       select(round=Round,end=End,Distance,Distance_actual) %>%
-      inner_join(.,df_sum60) -> df_group
+      inner_join(.,df_sum) -> df_group
     
     df_group %>%
-      ggplot(aes(x=Distance_actual,score)) +
-      geom_point() +
-      geom_smooth(method='lm',formula=y~x) +
-      labs(
-        title="Score plotted against grouping",
-        x="Grouping Perimeter in CM",
-        y="Point score"
-        
-      ) +
-      theme_tufte(base_family="sans") 
+      mutate(Perimeter=as.numeric(Distance_actual)) %>%
+      mutate(Score=score) %>%
+      ggplot(aes(x=round,color=Perimeter,size=Perimeter,y=Score)) +
+      geom_point(position="jitter") +
+      ggthemes::theme_tufte() +
+      labs(title = "Accuracy and grouping over rounds")
     
     
     
