@@ -15,6 +15,78 @@ key <- extract_key_from_url("https://docs.google.com/spreadsheets/d/17qRcQmidYnk
 
 key %>%
   gs_key() %>%
+  gs_read('tracking_60cm') -> df60
+
+key %>%
+  gs_key() %>%
+  gs_read('tracking_80cm') -> df80
+
+df2 <- bind_rows(df60,df80)
+
+data60 <- df60
+
+data60 %>%
+  group_by(round=as.numeric(Round),end=as.factor(End_unordered)) %>%
+  summarise(score=mean(real_score),
+            sd=sd(real_score,na.rm=TRUE),
+            range_max=max(real_score,na.rm=TRUE),
+            range_min=min(real_score,na.rm=TRUE),
+            distance=mean(distance_yards)
+  ) -> df_sum60
+
+key %>%
+  gs_key() %>%
+  gs_read('grouping') -> df_group
+
+df_group %>% 
+  na.omit(date )%>%
+  select(Round=Round,End_unordered=End,Distance,Distance_actual) %>%
+  inner_join(.,df2) %>%
+  mutate(round_end = as.numeric(paste0(Round,".",End_unordered))) %>%
+  group_by(round_end)%>%
+  summarise(Perimeter=mean(Distance_actual),
+            Score=mean(official_score),
+            Distance=mean(distance_yards))-> df_group
+
+df_group %>%
+  ggplot(aes(x=round_end,color=Perimeter,size=Perimeter,y=Score)) +
+  geom_point() +
+  ggthemes::theme_tufte() +
+  #facet_wrap(.~Distance, 
+   #          scales = "free_x",
+    #         rows=F) +
+  annotate("rect", xmin = 5, xmax = 5.8, ymin = 0, ymax = 9, fill="gray",alpha = .1) +
+  annotate("text", x = 5, y = 2.3,label="14 yards") +
+  annotate("rect", xmin = 5.8, xmax = 6.8, ymin = 0, ymax = 9, fill="yellow", alpha = .2) +
+  annotate("text", x = 6.8, y = 2.3,label="17 yards") +
+  annotate("rect", xmin = 6.8, xmax = 13.8, ymin = 0, ymax = 9, fill="gray",alpha = .1) +
+  annotate("text", x = 9, y = 2.3,label="20 yards") +
+  annotate("rect", xmin = 13.8, xmax = 14.8, ymin = 0, ymax = 9, fill="yellow", alpha = .2) +
+  annotate("text", x = 14, y = 2.3,label="30 yards") +
+  coord_cartesian(ylim = c(0,9)) +
+  labs(title = "Accuracy and grouping over rounds")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+key %>%
+  gs_key() %>%
   gs_read('tracking') -> df
 
 df %>%
@@ -177,11 +249,28 @@ data60 <- df60
     theme_tufte(base_family="sans") 
   
   df_group %>%
+    mutate(round_end=as.numeric(paste0(round,".",end))) %>%
     mutate(Distance_actual=as.numeric(Distance_actual)) %>%
     ggplot(aes(x=round,color=Distance_actual,size=Distance_actual,y=score)) +
     geom_point(position="jitter") +
     ggthemes::theme_tufte() +
     labs(title = "Accuracy and grouping over rounds")
+  
+  
+  df_group %>%
+    mutate(round_end=as.numeric(paste0(round,".",end))) %>%
+    mutate(Distance_actual=as.numeric(Distance_actual)) %>%
+    ggplot(aes(x=round_end,color=Distance_actual,size=Distance_actual,y=score)) +
+    geom_point() +
+    #stat_smooth(geom = "smooth",method = "auto", formula = y ~ x,alpha=.05) +
+    ggthemes::theme_tufte() +
+    labs(title = "Accuracy and grouping over rounds")
+  
+  
+  
+  
+  
+  
   
   data60 %>%
     mutate(Round=factor(Round,levels=c(min(Round):max(Round)))) %>%
@@ -227,6 +316,7 @@ data60 <- df60
   
   lmerTest::lmer(real_score ~ End_unordered + Round + (1|End_unordered), data = data60)
 summary(lm(real_score ~ End_unordered + Round, data = data60))
+plot(lm(real_score ~ End_unordered + Round, data = data60))
 
 
 
