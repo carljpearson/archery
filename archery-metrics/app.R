@@ -55,11 +55,15 @@ server <- function(input, output) {
   
   data <- isolate({
     
-    key <- extract_key_from_url("https://docs.google.com/spreadsheets/d/17qRcQmidYnkvlPqK7uTLuLpyzVyU0D7498WZnRXsPUI/edit?usp=sharing")
+    key %>%
+      gs_key() %>%
+      gs_read('tracking_60cm') -> df60
     
     key %>%
       gs_key() %>%
-      gs_read('tracking_60cm') -> df
+      gs_read('tracking_80cm') -> df80
+    
+    df2 <- bind_rows(df60,df80)
     
   })
   
